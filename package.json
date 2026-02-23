@@ -15,7 +15,9 @@
         "better-sqlite3": "^11.6.0",
         "cors": "^2.8.5",
         "express": "^4.21.1",
-        "papaparse": "^5.5.3"
+        "i18next": "^25.8.13",
+        "papaparse": "^5.5.3",
+        "react-i18next": "^16.5.4"
     },
     "devDependencies": {
         "@vitejs/plugin-react": "^4.3.3",

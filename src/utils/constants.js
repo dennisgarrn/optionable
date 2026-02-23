@@ -7,6 +7,18 @@ export const APP_VERSION = '0.13.0';
 // Pagination (default fallback — configurable via Settings)
 export const TRADES_PER_PAGE = 5;
 
+// Language Locales
+export const LANGUAGE_LOCALES = {
+    EN: 'en',
+    DE: 'de',
+};
+
+// Mapping of i18n language codes to JavaScript locale strings
+export const LOCALE_MAP = {
+    en: 'en-US',
+    de: 'de-DE',
+};
+
 // Status values
 export const STATUS = {
     OPEN: 'Open',

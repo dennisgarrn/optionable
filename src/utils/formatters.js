@@ -1,7 +1,9 @@
+import { getLocale } from './getLocale';
+
 // Date formatters
 export const formatDate = (dateStr) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(getLocale(), {
         month: 'numeric',
         day: 'numeric',
         year: 'numeric'
@@ -10,7 +12,7 @@ export const formatDate = (dateStr) => {
 
 export const formatDateShort = (dateStr) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(getLocale(), {
         month: 'short',
         day: 'numeric'
     });
@@ -18,7 +20,7 @@ export const formatDateShort = (dateStr) => {
 
 // Currency formatter
 export const formatCurrency = (val) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(getLocale(), {
         style: 'currency',
         currency: 'USD'
     }).format(val);
@@ -26,7 +28,7 @@ export const formatCurrency = (val) => {
 
 // Percentage formatter
 export const formatPercent = (val) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(getLocale(), {
         style: 'percent',
         minimumFractionDigits: 2
     }).format(val / 100);

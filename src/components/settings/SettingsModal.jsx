@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, X, ShieldCheck, Briefcase, Sun, Moon, Plus, Pencil, Trash2, Check, HelpCircle, List, Download } from 'lucide-react';
+import { Settings, X, ShieldCheck, Briefcase, Sun, Moon, Plus, Pencil, Trash2, Check, HelpCircle, List, Download, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+import { LANGUAGE_LOCALES } from '../../utils/constants';
+
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const WELCOME_STORAGE_KEY = 'optionable_welcome_dismissed';
 
@@ -12,6 +17,10 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
     const [newAccountName, setNewAccountName] = useState('');
     const [editingAccountId, setEditingAccountId] = useState(null);
     const [editingAccountName, setEditingAccountName] = useState('');
+    
+    const { language, setLanguage } = useLanguage();
+    
+    const { t } = useTranslation();
 
     useEffect(() => {
         fetchSettings();
@@ -26,7 +35,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
-            showToast?.('Failed to load settings', 'error');
+            showToast?.(t('toast.failedToLoadSettings'), 'error');
         } finally {
             setLoading(false);
         }
@@ -43,11 +52,11 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
             const data = await res.json();
             if (data.success) {
                 setSettings(prev => ({ ...prev, [key]: value }));
-                showToast?.('Setting updated', 'success');
+                showToast?.(t('toast.settingUpdated'), 'success');
             }
         } catch (error) {
             console.error('Error updating setting:', error);
-            showToast?.('Failed to update setting', 'error');
+            showToast?.(t('toast.failedToUpdateSetting'), 'error');
         } finally {
             setSaving(false);
         }
@@ -58,9 +67,9 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
         try {
             await onCreateAccount(newAccountName.trim());
             setNewAccountName('');
-            showToast?.('Account created', 'success');
+            showToast?.(t('toast.accountCreated'), 'success');
         } catch (err) {
-            showToast?.('Failed to create account', 'error');
+            showToast?.(t('toast.accountCreationFailed'), 'error');
         }
     };
 
@@ -70,19 +79,19 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
             await onRenameAccount(id, editingAccountName.trim());
             setEditingAccountId(null);
             setEditingAccountName('');
-            showToast?.('Account renamed', 'success');
+            showToast?.(t('toast.accountRenamed'), 'success');
         } catch (err) {
-            showToast?.('Failed to rename account', 'error');
+            showToast?.(t('toast.failedToRenameAccount'), 'error');
         }
     };
 
     const handleDeleteAccount = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this account? This will only work if the account has no data.')) return;
+        if (!window.confirm(t('toast.confirmDeleteAccount'))) return;
         try {
             await onDeleteAccount(id);
-            showToast?.('Account deleted', 'success');
+            showToast?.(t('toast.accountDeleted'), 'success');
         } catch (err) {
-            const msg = err.message || 'Cannot delete account with existing data';
+            const msg = err.message || t('toast.cannotDeleteAccountWithData');
             showToast?.(msg, 'error');
         }
     };
@@ -127,7 +136,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                 <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-2">
                         <Settings className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Settings</h2>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t('settings.title')}</h2>
                     </div>
                     <button
                         onClick={onClose}
@@ -139,14 +148,35 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
 
                 {/* Settings List */}
                 <div className="p-4 space-y-4 overflow-y-auto">
+                    {/* Language Selector */}
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                            <Globe className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                            <div>
+                                <p className="font-medium text-slate-900 dark:text-white">{t('settings.language')}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    {t('settings.languageDesc')}
+                                </p>
+                            </div>
+                        </div>
+                        <select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                            className="px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <option value={LANGUAGE_LOCALES.EN}>{t('languages.en')}</option>
+                            <option value={LANGUAGE_LOCALES.DE}>{t('languages.de')}</option>
+                        </select>
+                    </div>
+
                     {/* Confirm Expire Toggle */}
                     <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                         <div className="flex items-center gap-3">
                             <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                             <div>
-                                <p className="font-medium text-slate-900 dark:text-white">Confirm Expiry</p>
+                                <p className="font-medium text-slate-900 dark:text-white">{t('settings.confirmExpiry')}</p>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Ask for confirmation before expiring trades
+                                    {t('settings.confirmExpiryDesc')}
                                 </p>
                             </div>
                         </div>
@@ -176,9 +206,9 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                                 <Sun className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                             )}
                             <div>
-                                <p className="font-medium text-slate-900 dark:text-white">Dark Mode</p>
+                                <p className="font-medium text-slate-900 dark:text-white">{t('settings.darkMode')}</p>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {darkMode ? 'Dark theme active' : 'Light theme active'}
+                                    {darkMode ? t('settings.darkModeDesc') : t('settings.lightModeDesc')}
                                 </p>
                             </div>
                         </div>
@@ -204,9 +234,9 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                             <div className="flex items-center gap-3">
                                 <List className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                                 <div>
-                                    <p className="font-medium text-slate-900 dark:text-white">Paginate Trades</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">{t('settings.paginateTrades')}</p>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Split trade log into pages
+                                        {t('settings.paginateTradesDesc')}
                                     </p>
                                 </div>
                             </div>
@@ -229,7 +259,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                         {paginationEnabled && (
                             <div className="px-4 pb-4 pt-0">
                                 <div className="flex items-center gap-3 pl-8">
-                                    <label className="text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">Trades per page</label>
+                                    <label className="text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">{t('settings.tradesPerPage')}</label>
                                     <input
                                         type="number"
                                         min="1"
@@ -254,9 +284,9 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                         <div className="flex items-center gap-3">
                             <Briefcase className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                             <div>
-                                <p className="font-medium text-slate-900 dark:text-white">Portfolio Mode</p>
+                                <p className="font-medium text-slate-900 dark:text-white">{t('settings.portfolioMode')}</p>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Track cash flow, stocks, and portfolio
+                                    {t('settings.portfolioModeDesc')}
                                 </p>
                             </div>
                         </div>
@@ -282,9 +312,9 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                         <div className="flex items-center gap-3">
                             <HelpCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                             <div>
-                                <p className="font-medium text-slate-900 dark:text-white">Show Help on Startup</p>
+                                <p className="font-medium text-slate-900 dark:text-white">{t('settings.showHelpOnStartup')}</p>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Display welcome guide when the app opens
+                                    {t('settings.showHelpOnStartupDesc')}
                                 </p>
                             </div>
                         </div>
@@ -311,9 +341,9 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                         <div className="flex items-center gap-3">
                             <Download className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                             <div>
-                                <p className="font-medium text-slate-900 dark:text-white">Export Database</p>
+                                <p className="font-medium text-slate-900 dark:text-white">{t('settings.exportDatabase')}</p>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Download a backup of your data
+                                    {t('settings.exportDatabaseDesc')}
                                 </p>
                             </div>
                         </div>
@@ -326,7 +356,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                             }}
                             className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors"
                         >
-                            Export
+                            {t('common.export')}
                         </button>
                     </div>
 
@@ -335,7 +365,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                     {/* Accounts Management */}
                     <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg overflow-hidden">
                         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-600">
-                            <p className="font-semibold text-sm text-slate-900 dark:text-white text-center uppercase tracking-wide">Accounts</p>
+                            <p className="font-semibold text-sm text-slate-900 dark:text-white text-center uppercase tracking-wide">{t('settings.accounts')}</p>
                         </div>
                         <div className="p-4 space-y-2">
                             {accounts && accounts.map(account => (
@@ -369,14 +399,14 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                                             <button
                                                 onClick={() => { setEditingAccountId(account.id); setEditingAccountName(account.name); }}
                                                 className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors"
-                                                title="Rename"
+                                                title={t('common.rename')}
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteAccount(account.id)}
                                                 className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-                                                title="Delete"
+                                                title={t('common.delete')}
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
@@ -392,7 +422,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                                     value={newAccountName}
                                     onChange={(e) => setNewAccountName(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleAddAccount()}
-                                    placeholder="New account name"
+                                    placeholder={t('settings.newAccountPlaceholder')}
                                     className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                                 <button
@@ -401,7 +431,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                                     className="flex items-center gap-1 px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg font-medium transition-colors"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
-                                    Add
+                                    {t('common.add')}
                                 </button>
                             </div>
                         </div>
@@ -414,7 +444,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                         onClick={onClose}
                         className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors"
                     >
-                        Done
+                        {t('common.done')}
                     </button>
                 </div>
             </div>

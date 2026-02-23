@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, Keyboard, TrendingUp, RefreshCw, PlusCircle, FileText, ArrowDown, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const STORAGE_KEY = 'optionable_welcome_dismissed';
 
 export const WelcomeModal = ({ isOpen: externalOpen, onClose }) => {
+    const { t } = useTranslation();
+    
     const [internalOpen, setInternalOpen] = useState(false);
     const [dontShowAgain, setDontShowAgain] = useState(false);
 
@@ -35,8 +38,8 @@ export const WelcomeModal = ({ isOpen: externalOpen, onClose }) => {
                 <div className="p-5 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-indigo-500 to-purple-600 shrink-0">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-bold text-white">Welcome to Optionable</h2>
-                            <p className="text-indigo-100 text-sm mt-1">Your wheel strategy tracker</p>
+                            <h2 className="text-xl font-bold text-white">{t('welcome.title')}</h2>
+                            <p className="text-indigo-100 text-sm mt-1">{t('welcome.description')}</p>
                         </div>
                         <button
                             onClick={handleClose}
@@ -52,44 +55,44 @@ export const WelcomeModal = ({ isOpen: externalOpen, onClose }) => {
                     {/* How It Works */}
                     <div>
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-3">
-                            How the Wheel Works
+                            {t('welcome.howItWorksTitle')}
                         </h3>
                         <div className="space-y-2">
-                            <Step number="1" title="Sell a Cash-Secured Put (CSP)" description="Collect premium on a stock you'd like to own at a lower price" />
+                            <Step number="1" title={t('welcome.step1Title')} description={t('welcome.step1Desc')} />
                             <StepArrow />
-                            <Step number="2" title="If assigned, you get the shares" description="Your position shows up automatically in the Stock Positions table" />
+                            <Step number="2" title={t('welcome.step2Title')} description={t('welcome.step2Desc')} />
                             <StepArrow />
-                            <Step number="3" title="Sell Covered Calls (CC) on those shares" description="Use the CC button on your position to start collecting more premium" />
+                            <Step number="3" title={t('welcome.step3Title')} description={t('welcome.step3Desc')} />
                             <StepArrow />
-                            <Step number="4" title="Repeat until shares are called away" description="Roll trades forward or let them expire — all linked in a chain" />
+                            <Step number="4" title={t('welcome.step4Title')} description={t('welcome.step4Desc')} />
                         </div>
                     </div>
 
                     {/* Features */}
                     <div>
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-3">
-                            Key Features
+                            {t('welcome.featuresTitle')}
                         </h3>
                         <div className="space-y-3">
                             <Feature
                                 icon={<PlusCircle className="w-4 h-4" />}
-                                title="Track CSP & CC Trades"
-                                description="Log trades with strike, premium, delta, and expiration. See P/L instantly."
+                                title={t('welcome.feature1Title')}
+                                description={t('welcome.feature1Desc')}
                             />
                             <Feature
                                 icon={<RefreshCw className="w-4 h-4" />}
-                                title="Roll & Chain Trades"
-                                description="Roll options forward — trades are linked together so you can track the full chain P/L."
+                                title={t('welcome.feature2Title')}
+                                description={t('welcome.feature2Desc')}
                             />
                             <Feature
                                 icon={<TrendingUp className="w-4 h-4" />}
-                                title="Stock Positions & Live Prices"
-                                description="Assigned CSPs auto-create stock positions. Enable live prices in Settings."
+                                title={t('welcome.feature3Title')}
+                                description={t('welcome.feature3Desc')}
                             />
                             <Feature
                                 icon={<FileText className="w-4 h-4" />}
-                                title="Import & Export"
-                                description="Back up everything to CSV. Supports trades, fund transactions, and stock purchases."
+                                title={t('welcome.feature4Title')}
+                                description={t('welcome.feature4Desc')}
                             />
                         </div>
                     </div>
@@ -98,22 +101,22 @@ export const WelcomeModal = ({ isOpen: externalOpen, onClose }) => {
                     <div>
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-3 flex items-center gap-2">
                             <Keyboard className="w-4 h-4" />
-                            Keyboard Shortcuts
+                            {t('welcome.shortcutsTitle')}
                         </h3>
                         <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
                             <div className="grid grid-cols-2 gap-2 text-sm">
-                                <Shortcut keys={['N']} action="New trade" />
-                                <Shortcut keys={['S']} action="Settings" />
-                                <Shortcut keys={['H']} action="Help" />
-                                <Shortcut keys={['Esc']} action="Close modal" />
+                                <Shortcut keys={['N']} action={t('welcome.shortcutNewTrade')} />
+                                <Shortcut keys={['S']} action={t('welcome.shortcutSettings')} />
+                                <Shortcut keys={['H']} action={t('welcome.shortcutHelp')} />
+                                <Shortcut keys={['Esc']} action={t('welcome.shortcutCloseModal')} />
                             </div>
                         </div>
                     </div>
 
                     {/* Quick Tips */}
                     <div className="text-sm text-slate-500 dark:text-slate-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                        <p className="font-medium text-amber-700 dark:text-amber-400 mb-1">Quick Tip</p>
-                        <p>When a CSP is assigned, click the <span className="text-purple-600 dark:text-purple-400 font-medium">CC</span> button on that trade to quickly open a covered call on those shares. Enable <span className="font-medium">Portfolio Mode</span> in Settings to track deposits, withdrawals, and manual stock purchases.</p>
+                        <p className="font-medium text-amber-700 dark:text-amber-400 mb-1">{t('welcome.quickTipTitle')}</p>
+                        <p>{t('welcome.quickTipBody')}</p>
                     </div>
                 </div>
 
@@ -126,13 +129,13 @@ export const WelcomeModal = ({ isOpen: externalOpen, onClose }) => {
                             onChange={(e) => setDontShowAgain(e.target.checked)}
                             className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 focus:ring-indigo-500"
                         />
-                        Don't show this again
+                        {t('welcome.dontShowAgain')}
                     </label>
                     <button
                         onClick={handleClose}
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
                     >
-                        Get Started
+                        {t('welcome.getStarted')}
                     </button>
                 </div>
             </div>

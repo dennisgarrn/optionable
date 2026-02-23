@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/formatters';
 
 export const TradeModal = ({
@@ -19,6 +20,8 @@ export const TradeModal = ({
     modalAccountId,
     setModalAccountId
 }) => {
+    const { t } = useTranslation();
+    
     if (!isModalOpen) return null;
 
     const needsAccountPicker = !selectedAccountId && !editingId && !isRolling;
@@ -29,12 +32,12 @@ export const TradeModal = ({
                 <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
                     <div>
                         <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-                            {editingId ? 'Edit Trade' : isRolling ? 'Roll Trade' : 'New Trade'}
+                            {editingId ? t('header.modal.editTrade') : isRolling ? t('header.modal.rollTrade') : t('header.newTrade')}
                         </h2>
                         {isRolling && rollFromTrade && (
                             <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
                                 <RefreshCw className="w-3 h-3" />
-                                Rolling {rollFromTrade.ticker} ${rollFromTrade.strike} {rollFromTrade.type}
+                                {t('header.modal.rolling', { ticker: rollFromTrade.ticker, strike: rollFromTrade.strike, type: rollFromTrade.type })}
                             </p>
                         )}
                     </div>
@@ -48,14 +51,14 @@ export const TradeModal = ({
                     {/* Account Picker (only when creating new trade with no account selected) */}
                     {needsAccountPicker && (
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Account *</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.account')} *</label>
                             <select
                                 value={modalAccountId || ''}
                                 onChange={(e) => setModalAccountId(e.target.value ? Number(e.target.value) : null)}
                                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                                 required
                             >
-                                <option value="">Select account...</option>
+                                <option value="">{t('common.selectAccount')}</option>
                                 {(accounts || []).map(a => (
                                     <option key={a.id} value={a.id}>{a.name}</option>
                                 ))}
@@ -68,25 +71,25 @@ export const TradeModal = ({
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
                             <h3 className="font-semibold text-amber-800 text-sm flex items-center gap-2">
                                 <RefreshCw className="w-4 h-4" />
-                                Close Original Position
+                                {t('header.modal.closeOriginalPosition')}
                             </h3>
                             <div className="grid grid-cols-3 gap-3 text-sm">
                                 <div>
-                                    <span className="text-amber-600 text-xs">Ticker</span>
+                                    <span className="text-amber-600 text-xs">{t('common.ticker')}</span>
                                     <p className="font-bold text-amber-900">{rollFromTrade.ticker}</p>
                                 </div>
                                 <div>
-                                    <span className="text-amber-600 text-xs">Strike</span>
+                                    <span className="text-amber-600 text-xs">{t('common.strike')}</span>
                                     <p className="font-bold text-amber-900">${rollFromTrade.strike}</p>
                                 </div>
                                 <div>
-                                    <span className="text-amber-600 text-xs">Entry Premium</span>
+                                    <span className="text-amber-600 text-xs">{t('header.modal.entryPremium')}</span>
                                     <p className="font-bold text-emerald-600">${rollFromTrade.entryPrice}</p>
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold text-amber-700 uppercase mb-1">
-                                    Close Cost (per share) *
+                                    {t('header.modal.closeCostPerShare')} *
                                 </label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-2 text-amber-400">$</span>
@@ -95,11 +98,11 @@ export const TradeModal = ({
                                         value={rollClosePrice}
                                         onChange={(e) => setRollClosePrice(e.target.value)}
                                         className="w-full pl-7 pr-3 py-2 border border-amber-300 rounded-lg focus:ring-amber-500 bg-white"
-                                        placeholder="Cost to buy back original"
+                                        placeholder={t('header.modal.closeCostPlaceholder')}
                                     />
                                 </div>
                                 <div className="text-xs text-amber-600 mt-1">
-                                    Original P/L: {formatCurrency((rollFromTrade.entryPrice - (Number(rollClosePrice) || 0)) * rollFromTrade.quantity * 100)}
+                                    {t('header.modal.originalPL')}: {formatCurrency((rollFromTrade.entryPrice - (Number(rollClosePrice) || 0)) * rollFromTrade.quantity * 100)}
                                 </div>
                             </div>
                         </div>
@@ -108,18 +111,18 @@ export const TradeModal = ({
                     {/* New Trade Section Header (only when rolling) */}
                     {isRolling && (
                         <div className="border-t border-slate-200 pt-4">
-                            <h3 className="font-semibold text-indigo-700 text-sm mb-3">New Rolled Position</h3>
+                            <h3 className="font-semibold text-indigo-700 text-sm mb-3">{t('header.modal.newRolledPosition')}</h3>
                         </div>
                     )}
 
                     <div className="grid grid-cols-1">
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Ticker</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.ticker')}</label>
                             <input
                                 type="text" name="ticker" required
                                 value={formData.ticker} onChange={handleInputChange}
                                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                                placeholder="e.g. GOOG"
+                                placeholder={t('common.tickerPlaceholder')}
                                 readOnly={isRolling}
                             />
                         </div>
@@ -127,37 +130,37 @@ export const TradeModal = ({
 
                     <div className="grid grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Opened</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.opened')}</label>
                             <input type="date" name="openedDate" required value={formData.openedDate} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Expiration *</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.expiry')} *</label>
                             <input type="date" name="expirationDate" required value={formData.expirationDate} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Closed (Opt)</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.closed')} (Opt)</label>
                             <input type="date" name="closedDate" value={formData.closedDate} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-4 gap-4">
                         <div className="col-span-1">
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Type</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.type')}</label>
                             <select name="type" value={formData.type} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" disabled={isRolling}>
                                 <option value="CSP">CSP (Put)</option>
                                 <option value="CC">CC (Call)</option>
                             </select>
                         </div>
                         <div className="col-span-1">
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">New Strike *</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.newStrike')} *</label>
                             <input type="number" step="0.5" name="strike" required value={formData.strike} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" placeholder="0.00" />
                         </div>
                         <div className="col-span-1">
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Qty</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.qty')}</label>
                             <input type="number" name="quantity" required value={formData.quantity} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" />
                         </div>
                         <div className="col-span-1">
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Delta</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.delta')}</label>
                             <input type="number" step="0.01" min="0" max="1" name="delta" value={formData.delta} onChange={handleInputChange} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white" placeholder="0.30" />
                         </div>
                     </div>
@@ -165,7 +168,7 @@ export const TradeModal = ({
                     <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-100 dark:border-slate-600">
                         <div>
                             <label className="block text-xs font-semibold uppercase mb-1 text-emerald-600 dark:text-emerald-400">
-                                {isRolling ? 'New Premium *' : 'Entry Premium ($)'}
+                                {isRolling ? `${t('header.modal.newPremium')} *` : `${t('header.modal.entryPremium')} ($)`}
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-2 text-slate-400">$</span>
@@ -173,24 +176,24 @@ export const TradeModal = ({
                                     type="number" step="0.01" name="entryPrice" required
                                     value={formData.entryPrice} onChange={handleInputChange}
                                     className="w-full pl-7 pr-3 py-2 border border-emerald-200 dark:border-emerald-700 rounded-lg focus:ring-emerald-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                                    placeholder="Price per share"
+                                    placeholder={t('header.modal.pricePerSharePlaceholder')}
                                 />
                             </div>
                             <div className="text-[10px] text-slate-400 mt-1 text-right">
-                                Total: {formatCurrency((formData.entryPrice || 0) * (formData.quantity || 0) * 100)}
+                                {t('common.total')}: {formatCurrency((formData.entryPrice || 0) * (formData.quantity || 0) * 100)}
                             </div>
                         </div>
 
                         {!isRolling && (
                             <div>
-                                <label className="block text-xs font-semibold uppercase mb-1 text-red-500 dark:text-red-400">Close Cost ($)</label>
+                                <label className="block text-xs font-semibold uppercase mb-1 text-red-500 dark:text-red-400">{t('header.modal.closeCost')} ($)</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-2 text-slate-400">$</span>
                                     <input
                                         type="number" step="0.01" name="closePrice"
                                         value={formData.closePrice} onChange={handleInputChange}
                                         className="w-full pl-7 pr-3 py-2 border border-red-200 dark:border-red-700 rounded-lg focus:ring-red-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                                        placeholder="0.00 if open"
+                                        placeholder={t('header.modal.closeCostIfOpenPlaceholder')}
                                     />
                                 </div>
                             </div>
@@ -198,7 +201,7 @@ export const TradeModal = ({
 
                         {isRolling && (
                             <div className="flex flex-col justify-center">
-                                <div className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">Net Credit/Debit</div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-1">{t('header.modal.netCreditDebit')}</div>
                                 <div className={`text-xl font-bold ${((Number(formData.entryPrice) || 0) - (Number(rollClosePrice) || 0)) >= 0
                                     ? 'text-emerald-600 dark:text-emerald-400'
                                     : 'text-red-600 dark:text-red-400'
@@ -206,27 +209,27 @@ export const TradeModal = ({
                                     {formatCurrency(((Number(formData.entryPrice) || 0) - (Number(rollClosePrice) || 0)) * (formData.quantity || 1) * 100)}
                                 </div>
                                 <div className="text-[10px] text-slate-400">
-                                    {((Number(formData.entryPrice) || 0) - (Number(rollClosePrice) || 0)) >= 0 ? 'Credit' : 'Debit'}
+                                    {((Number(formData.entryPrice) || 0) - (Number(rollClosePrice) || 0)) >= 0 ? t('common.credit') : t('common.debit')}
                                 </div>
                             </div>
                         )}
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Notes</label>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.notes')}</label>
                         <textarea
                             name="notes"
                             value={formData.notes}
                             onChange={handleInputChange}
                             rows={2}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white resize-none"
-                            placeholder="Optional notes about this trade..."
+                            placeholder={t('common.notesPlaceholder')}
                         />
                     </div>
 
                     {!isRolling && (
                         <div>
-                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">Status</label>
+                            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-1">{t('common.status')}</label>
                             <div className="grid grid-cols-4 gap-2">
                                 {['Open', 'Expired', 'Assigned', 'Closed'].map((s) => (
                                     <button
@@ -238,18 +241,18 @@ export const TradeModal = ({
                                             : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
                                             }`}
                                     >
-                                        {s}
+                                        {t(`common.${s.toLowerCase()}`)}
                                     </button>
                                 ))}
                             </div>
-                            <p className="text-[10px] text-slate-400 mt-1">Use the Roll button to roll a trade</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{t('header.modal.useRollButtonHint')}</p>
                         </div>
                     )}
 
                     <div className="pt-4 flex gap-3">
-                        <button type="button" onClick={closeModal} className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700">Cancel</button>
+                        <button type="button" onClick={closeModal} className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700">{t('common.cancel')}</button>
                         <button type="submit" disabled={needsAccountPicker && !modalAccountId} className="flex-1 px-4 py-2 bg-indigo-600 dark:bg-indigo-500 rounded-lg text-white font-semibold hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:bg-slate-300 dark:disabled:bg-slate-600">
-                            {editingId ? 'Update Trade' : isRolling ? 'Roll & Create New' : 'Save Trade'}
+                            {editingId ? t('header.modal.updateTrade') : isRolling ? t('header.modal.rollAndCreateNew') : t('header.modal.saveTrade')}
                         </button>
                     </div>
 

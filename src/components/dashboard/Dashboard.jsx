@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 
 const KpiCard = ({ label, value, subtext, valueClassName = '' }) => (
@@ -12,6 +13,8 @@ const KpiCard = ({ label, value, subtext, valueClassName = '' }) => (
 );
 
 export const Dashboard = ({ stats }) => {
+    const { t } = useTranslation();
+
     const totalPnLWithCapitalGains = stats.totalPnLWithCapitalGains ?? stats.totalPnL;
     const realizedCapitalGL = stats.realizedCapitalGL ?? 0;
     const closedPositions = stats.closedPositions ?? 0;
@@ -19,45 +22,45 @@ export const Dashboard = ({ stats }) => {
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <KpiCard
-                label="Premium Collected"
+                label={t('dashboard.premiumCollected')}
                 value={formatCurrency(stats.totalPremiumCollected)}
                 valueClassName="text-emerald-600 dark:text-emerald-400"
-                subtext={`${stats.closedTradesCount} closed trades`}
+                subtext={t('dashboard.closedTradesSubtext', { count: stats.closedTradesCount })}
             />
 
             <KpiCard
-                label="Avg ROI"
+                label={t('dashboard.avgRoi')}
                 value={formatPercent(stats.avgRoi)}
                 valueClassName={stats.avgRoi >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
-                subtext={`${stats.closedTradesCount} closed trades`}
+                subtext={t('dashboard.closedTradesSubtext', { count: stats.closedTradesCount })}
             />
 
             <KpiCard
-                label="Win Rate"
+                label={t('dashboard.winRate')}
                 value={formatPercent(stats.winRate)}
                 valueClassName="text-indigo-600 dark:text-indigo-400"
-                subtext={`${stats.resolvedChains} closed chains`}
+                subtext={t('dashboard.closedChainsSubtext', { count: stats.resolvedChains })}
             />
 
             <KpiCard
-                label="Stock Gains"
+                label={t('dashboard.stockGains')}
                 value={formatCurrency(realizedCapitalGL)}
                 valueClassName={realizedCapitalGL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
-                subtext={`${closedPositions} closed positions`}
+                subtext={t('dashboard.closedPositionsSubtext', { count: closedPositions })}
             />
 
             <KpiCard
-                label="Total P/L"
+                label={t('dashboard.totalPnl')}
                 value={formatCurrency(totalPnLWithCapitalGains)}
                 valueClassName={totalPnLWithCapitalGains >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
-                subtext="Premiums + Stock Gains"
+                subtext={t('dashboard.totalPnlSubtext')}
             />
 
             <KpiCard
-                label="Deployed Capital"
+                label={t('dashboard.deployedCapital')}
                 value={formatCurrency(stats.capitalAtRisk)}
                 valueClassName="text-slate-700 dark:text-slate-200"
-                subtext={`${stats.openTradesCount} open trade${stats.openTradesCount !== 1 ? 's' : ''}`}
+                subtext={t('dashboard.openTradesSubtext', { count: stats.openTradesCount })}
             />
         </div>
     );

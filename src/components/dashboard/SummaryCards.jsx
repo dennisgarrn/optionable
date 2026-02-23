@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../../utils/formatters';
 
 const StatTable = ({ title, data, emptyMessage, formatKey, sortFn }) => (
@@ -44,18 +45,19 @@ const TipsCard = () => (
 );
 
 export const SummaryCards = ({ stats }) => {
+    const { t } = useTranslation();
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <StatTable
-                title="Monthly P/L"
+                title={t('dashboard.monthlyPnl')}
                 data={stats.monthlyStats}
-                emptyMessage="No data yet"
+                emptyMessage={t('common.noDataYet')}
                 sortFn={(a, b) => new Date(b[0]) - new Date(a[0])}
             />
             <StatTable
-                title="Ticker P/L"
+                title={t('dashboard.tickerPnl')}
                 data={stats.tickerStats}
-                emptyMessage="No data yet"
+                emptyMessage={t('common.noDataYet')}
                 formatKey={true}
                 sortFn={(a, b) => b[1] - a[1]}
             />

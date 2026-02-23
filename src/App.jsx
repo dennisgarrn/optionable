@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { X, TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Shared utilities
 import { APP_VERSION } from './utils/constants';
@@ -50,6 +51,8 @@ export default function App() {
     const { trades, loading, error, setError, fetchTrades } = useTrades(selectedAccountId);
     const { darkMode, setDarkMode } = useTheme();
     const { stats, chainInfo, chartData, chartPeriod, setChartPeriod, fetchCapitalGainsStats } = useStats(trades, selectedAccountId);
+
+    const { t } = useTranslation();
 
     // Portfolio hook
     const portfolio = usePortfolio(selectedAccountId);
@@ -203,7 +206,7 @@ export default function App() {
                         ? () => setBuyStockTrigger(t => t + 1)
                         : () => tradeForm.openModal()
                     }
-                    newTradeLabel={isPortfolioTab ? 'Buy Stock' : 'New Trade'}
+                    newTradeLabel={isPortfolioTab ? t('header.buyStock') : t('header.newTrade')}
                     newTradeIcon={isPortfolioTab ? TrendingUp : undefined}
                     onOpenSettings={() => setShowSettings(true)}
                     version={APP_VERSION}

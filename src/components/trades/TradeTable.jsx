@@ -15,13 +15,14 @@ import {
     ArrowDown,
     PlusCircle
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatDateShort, formatCurrency, formatPercent } from '../../utils/formatters';
 import { calculateDTE, calculateMetrics } from '../../utils/calculations';
 
 const STATUS_TABS = [
-    { key: 'all', label: 'All' },
-    { key: 'open', label: 'Open' },
-    { key: 'closed', label: 'Closed' }
+    'all',
+    'open',
+    'closed',
 ];
 
 export const TradeTable = ({
@@ -46,6 +47,8 @@ export const TradeTable = ({
     const [expandedChains, setExpandedChains] = useState(new Set());
     const [expireConfirm, setExpireConfirm] = useState(null); // trade to confirm expire
     const [prices, setPrices] = useState({});
+    
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (!livePricesEnabled) { setPrices({}); return; }
@@ -239,22 +242,22 @@ export const TradeTable = ({
             <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50 dark:bg-slate-800/50">
                 <h3 className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-slate-400" />
-                    Trade Log
+                    {t('dashboard.tradeLog')}
                 </h3>
                 <div className="flex items-center gap-3">
                     {/* Status Filter Tabs */}
                     <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-0.5">
                         {STATUS_TABS.map(tab => (
                             <button
-                                key={tab.key}
-                                onClick={() => { setStatusFilter(tab.key); setCurrentPage(1); }}
+                                key={tab}
+                                onClick={() => { setStatusFilter(tab); setCurrentPage(1); }}
                                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                                    statusFilter === tab.key
+                                    statusFilter === tab
                                         ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                             >
-                                {tab.label}
+                                {t(`common.${tab}`)}
                             </button>
                         ))}
                     </div>
@@ -265,11 +268,11 @@ export const TradeTable = ({
                             className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                         >
                             <X className="w-3 h-3" />
-                            Clear
+                            {t('common.clear')}
                         </button>
                     )}
                     <span className="text-xs text-slate-400 font-mono bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                        {chainedTrades.length} chains · {filteredAndSortedTrades.length} trades
+                        {t('common.chains', { count: chainedTrades.length })} · {t('common.trades', { count: filteredAndSortedTrades.length })}
                     </span>
                 </div>
             </div>
@@ -280,47 +283,47 @@ export const TradeTable = ({
                     <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
                         <tr>
                             <th className="px-3 py-2 w-[12%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('ticker')}>
-                                <span className="inline-flex items-center gap-1 justify-center"><span className="p-0.5"><ChevronRight className="w-4 h-4 text-transparent" /></span>Ticker {getSortIcon('ticker')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center"><span className="p-0.5"><ChevronRight className="w-4 h-4 text-transparent" /></span>{t('common.ticker')} {getSortIcon('ticker')}</span>
                             </th>
                             <th className="px-3 py-2 w-[5%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('type')}>
-                                <span className="inline-flex items-center gap-1 justify-center">Type {getSortIcon('type')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.type')} {getSortIcon('type')}</span>
                             </th>
                             <th className="px-3 py-2 w-[7%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('strike')}>
-                                <span className="inline-flex items-center gap-1 justify-center">Strike {getSortIcon('strike')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.strike')} {getSortIcon('strike')}</span>
                             </th>
-                            {livePricesEnabled && <th className="px-3 py-2 w-[7%] font-semibold text-center">Price</th>}
+                            {livePricesEnabled && <th className="px-3 py-2 w-[7%] font-semibold text-center">{t('common.price')}</th>}
                             <th className="px-3 py-2 w-[5%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('quantity')}>
-                                <span className="inline-flex items-center gap-1 justify-center">Qty {getSortIcon('quantity')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.qty')} {getSortIcon('quantity')}</span>
                             </th>
                             <th className="px-3 py-2 w-[6%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('delta')}>
-                                <span className="inline-flex items-center gap-1 justify-center">Delta {getSortIcon('delta')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.delta')} {getSortIcon('delta')}</span>
                             </th>
                             <th className="px-3 py-2 w-[8%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('openedDate')}>
-                                <span className="inline-flex items-center gap-1 justify-center">Opened {getSortIcon('openedDate')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.opened')} {getSortIcon('openedDate')}</span>
                             </th>
                             <th className="px-3 py-2 w-[8%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('expirationDate')}>
-                                <span className="inline-flex items-center gap-1 justify-center">Expiry {getSortIcon('expirationDate')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.expiry')} {getSortIcon('expirationDate')}</span>
                             </th>
                             <th className="px-3 py-2 w-[5%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('dte')}>
-                                <span className="inline-flex items-center gap-1 justify-center">DTE {getSortIcon('dte')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.dte')} {getSortIcon('dte')}</span>
                             </th>
                             <th className="px-3 py-2 w-[9%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('pnl')}>
-                                <span className="inline-flex items-center gap-1 justify-center">P/L {getSortIcon('pnl')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.pnl')} {getSortIcon('pnl')}</span>
                             </th>
                             <th className="px-3 py-2 w-[7%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('roi')}>
-                                <span className="inline-flex items-center gap-1 justify-center">ROI {getSortIcon('roi')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.roi')} {getSortIcon('roi')}</span>
                             </th>
                             <th className="px-3 py-2 w-[8%] font-semibold text-center cursor-pointer hover:text-slate-700 dark:hover:text-slate-200" onClick={() => handleSort('status')}>
-                                <span className="inline-flex items-center gap-1 justify-center">Status {getSortIcon('status')}</span>
+                                <span className="inline-flex items-center gap-1 justify-center">{t('common.status')} {getSortIcon('status')}</span>
                             </th>
-                            <th className="px-3 py-2 w-[13%] font-semibold text-right">Actions</th>
+                            <th className="px-3 py-2 w-[13%] font-semibold text-right">{t('common.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                         {paginatedChains.length === 0 ? (
                             <tr>
                                 <td colSpan={livePricesEnabled ? 13 : 12} className="px-4 py-12 text-center text-sm text-slate-400">
-                                    {trades.length === 0 ? "No trades yet. Click \"New Trade\" to start your wheel." : "No trades match the current filter."}
+                                    {trades.length === 0 ? t('dashboard.noTrades') : t('dashboard.noTradesMatchFilter')}
                                 </td>
                             </tr>
                         ) : (
@@ -410,7 +413,7 @@ export const TradeTable = ({
                                             <td className={`px-3 py-2 text-center font-mono text-sm font-medium ${chain.chainPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                                                 {formatCurrency(chain.chainPnL)}
                                                 {chain.isMultiTrade && (
-                                                    <span className="block text-[10px] text-slate-400 font-normal">chain total</span>
+                                                    <span className="block text-[10px] text-slate-400 font-normal">{t('dashboard.chainTotal')}</span>
                                                 )}
                                             </td>
                                             <td className={`px-3 py-2 text-center font-mono text-sm ${chain.chainRoi >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
@@ -419,7 +422,7 @@ export const TradeTable = ({
                                             <td className={`px-3 py-2 text-center text-xs font-medium ${
                                                 chain.finalStatus === 'Open' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'
                                             }`}>
-                                                {chain.finalStatus}
+                                                {t(`common.${chain.finalStatus.toLowerCase()}`)}
                                             </td>
                                             <td className="px-3 py-2 text-right">
                                                 <div className="flex justify-end gap-1">
@@ -435,7 +438,7 @@ export const TradeTable = ({
                                                             title="Sell a call on your assigned shares"
                                                         >
                                                             <PlusCircle className="w-3.5 h-3.5" />
-                                                            <span>Sell CC</span>
+                                                            <span>{t('common.sellCC')}</span>
                                                         </button>
                                                     )}
                                                     {chain.finalStatus === 'Open' && (
@@ -446,7 +449,7 @@ export const TradeTable = ({
                                                                 title="Mark as expired worthless"
                                                             >
                                                                 <Check className="w-3.5 h-3.5" />
-                                                                <span>Expire</span>
+                                                                <span>{t('common.expire')}</span>
                                                             </button>
                                                             <button
                                                                 onClick={() => onRoll(chain.trades[chain.trades.length - 1])}
@@ -454,7 +457,7 @@ export const TradeTable = ({
                                                                 title="Close and open new position"
                                                             >
                                                                 <RefreshCw className="w-3.5 h-3.5" />
-                                                                <span>Roll</span>
+                                                                <span>{t('common.roll')}</span>
                                                             </button>
                                                         </>
                                                     )}
@@ -464,7 +467,7 @@ export const TradeTable = ({
                                                         title="Modify trade details"
                                                     >
                                                         <Edit2 className="w-3.5 h-3.5" />
-                                                        <span>Edit</span>
+                                                        <span>{t('common.edit')}</span>
                                                     </button>
                                                     <button
                                                         onClick={() => onDelete(rootTrade.id)}
@@ -472,7 +475,7 @@ export const TradeTable = ({
                                                         title="Remove this trade"
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
-                                                        <span>Delete</span>
+                                                        <span>{t('common.delete')}</span>
                                                     </button>
                                                 </div>
                                             </td>
@@ -488,7 +491,7 @@ export const TradeTable = ({
                                                         <div className="flex items-center justify-center gap-1">
                                                             <span className="text-slate-300 dark:text-slate-600 mr-1">└</span>
                                                             <Link2 className="w-3 h-3 text-amber-500" />
-                                                            <span className="text-slate-500">Roll #{idx + 1}</span>
+                                                            <span className="text-slate-500">{t('common.roll')} #{idx + 1}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-3 py-2 text-center">
@@ -545,7 +548,7 @@ export const TradeTable = ({
                                                     <td className={`px-3 py-2 text-center text-xs font-medium ${
                                                         trade.status === 'Open' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'
                                                     }`}>
-                                                        {trade.status}
+                                                        {t(`common.${trade.status.toLowerCase()}`)}
                                                     </td>
                                                     <td className="px-3 py-2 text-right">
                                                         <div className="flex justify-end gap-1">
@@ -555,7 +558,7 @@ export const TradeTable = ({
                                                                 title="Edit trade"
                                                             >
                                                                 <Edit2 className="w-3.5 h-3.5" />
-                                                                <span>Edit</span>
+                                                                <span>{t('common.edit')}</span>
                                                             </button>
                                                             <button
                                                                 onClick={() => onDelete(trade.id)}
@@ -563,7 +566,7 @@ export const TradeTable = ({
                                                                 title="Delete trade"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5" />
-                                                                <span>Delete</span>
+                                                                <span>{t('common.delete')}</span>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -582,7 +585,7 @@ export const TradeTable = ({
             {totalChainPages > 1 && (
                 <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                     <div className="text-sm text-slate-500 dark:text-slate-400">
-                        Showing {((currentPage - 1) * tradesPerPage) + 1} - {Math.min(currentPage * tradesPerPage, chainedTrades.length)} of {chainedTrades.length} chains
+                        {t('dashboard.paginationShowing', { from: ((currentPage - 1) * tradesPerPage) + 1, to: Math.min(currentPage * tradesPerPage, chainedTrades.length), total: chainedTrades.length })}
                     </div>
                     <div className="flex items-center gap-2">
                         <button
@@ -622,23 +625,23 @@ export const TradeTable = ({
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                            Confirm Expiry
+                            {t('common.confirmExpiry')}
                         </h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                            Mark <span className="font-semibold">{expireConfirm.ticker} {expireConfirm.type} ${expireConfirm.strike}</span> as expired worthless?
+                            {t('dashboard.expireConfirmPre')} <span className="font-semibold">{expireConfirm.ticker} {expireConfirm.type} ${expireConfirm.strike}</span> {t('dashboard.expireConfirmPost')}
                         </p>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setExpireConfirm(null)}
                                 className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700"
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={confirmExpire}
                                 className="flex-1 px-4 py-2 bg-emerald-600 dark:bg-emerald-500 rounded-lg text-white font-semibold hover:bg-emerald-700 dark:hover:bg-emerald-600"
                             >
-                                Expire
+                                {t('common.expire')}
                             </button>
                         </div>
                     </div>

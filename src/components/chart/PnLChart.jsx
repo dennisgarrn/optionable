@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
     AreaChart,
     Area,
@@ -11,15 +12,11 @@ import {
 } from 'recharts';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 
-const PERIODS = [
-    { key: '1m', label: '1M' },
-    { key: '3m', label: '3M' },
-    { key: '6m', label: '6M' },
-    { key: 'ytd', label: 'YTD' },
-    { key: 'all', label: 'All' }
-];
+const PERIODS = [ '1m', '3m', '6m', 'ytd', 'all'];
 
 const CustomTooltip = ({ active, payload }) => {
+    const { t } = useTranslation();
+
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         return (
@@ -27,10 +24,10 @@ const CustomTooltip = ({ active, payload }) => {
                 <p className="font-semibold text-slate-700 dark:text-slate-200">{data.ticker}</p>
                 <p className="text-slate-500 dark:text-slate-400">{formatDate(data.fullDate)}</p>
                 <p className={`font-mono font-medium ${data.tradePnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    Trade: {formatCurrency(data.tradePnl)}
+                    {t('common.trade')}: {formatCurrency(data.tradePnl)}
                 </p>
                 <p className={`font-mono font-bold ${data.pnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                    Total: {formatCurrency(data.pnl)}
+                    {t('common.total')}: {formatCurrency(data.pnl)}
                 </p>
             </div>
         );
@@ -45,6 +42,8 @@ export const PnLChart = ({
     totalPnL,
     darkMode
 }) => {
+    const { t } = useTranslation();
+
     if (chartData.length === 0) return null;
 
     const chartColor = totalPnL >= 0 ? "#10b981" : "#ef4444";
@@ -54,22 +53,22 @@ export const PnLChart = ({
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-slate-400" />
-                    Cumulative P/L
+                    {t('dashboard.totalPnl')}
                 </h3>
                 <div className="flex items-center gap-3">
                     {/* Time Period Selector */}
                     <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-0.5">
                         {PERIODS.map(period => (
                             <button
-                                key={period.key}
-                                onClick={() => onPeriodChange(period.key)}
+                                key={period}
+                                onClick={() => onPeriodChange(period)}
                                 className={`px-2 py-1 text-xs font-medium rounded-md transition-colors ${
-                                    chartPeriod === period.key
+                                    chartPeriod === period
                                         ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                             >
-                                {period.label}
+                                {t(`dashboard.periods.${period}`)}
                             </button>
                         ))}
                     </div>
