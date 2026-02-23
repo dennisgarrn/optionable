@@ -166,10 +166,17 @@ src/
 │   │   ├── StocksTable.jsx        # Stock positions with aggregation
 │   │   └── StockModal.jsx         # Stock buy/sell/edit modal
 │   └── settings/SettingsModal.jsx
+├── contexts/
+│   └── LanguageContext.jsx        # i18n language provider
 ├── hooks/                         # useTheme, useTrades, useTradeForm,
 │                                  # useStats, useFilterSort, useCSV,
 │                                  # useKeyboardShortcuts, useToast,
 │                                  # useAccounts, usePortfolio
+├── i18n/
+│   ├── config.ts                  # i18next initialisation
+│   └── locales/
+│       ├── en.json                # English translations
+│       └── de.json                # German translations
 ├── services/api.js                # API service layer
 ├── utils/                         # formatters, calculations, constants
 └── index.css                      # Tailwind styles
