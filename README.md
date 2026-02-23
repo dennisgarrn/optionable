@@ -42,6 +42,7 @@ The only external dependency is optional live stock prices via [stockprices.dev]
 - **Auto Calculations** - P/L, ROI, annualized ROI, DTE, collateral
 - **CSV Import/Export** - Multi-section format supporting trades, fund transactions, and stocks (backward compatible with old CSVs)
 - **Dark Mode** - Toggle in Settings
+- **Multilingual** - English and German supported; language toggle in Settings
 - **Keyboard Shortcuts** - N (new trade), S (settings), H (help), Esc (close)
 - **Welcome Guide** - First-time user onboarding with wheel strategy walkthrough (toggleable in Settings)
 - **Trade Notes** - Add optional notes to each trade
@@ -176,7 +177,7 @@ src/
 
 ## Tech Stack
 
-- **Frontend**: React 18, Vite, Tailwind CSS, Recharts, Lucide Icons
+- **Frontend**: React 18, Vite, Tailwind CSS, Recharts, Lucide Icons, i18next
 - **Backend**: Express.js, better-sqlite3
 - **Container**: Docker multi-stage build (Node 20 Alpine)
 
