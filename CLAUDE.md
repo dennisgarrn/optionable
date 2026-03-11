@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-Wheel Strategy Tracker for Cash Secured Puts (CSPs) and Covered Calls (CCs) with multi-account support and portfolio management. Self-hosted, local-first app with SQLite storage. Only external dependency is optional live stock prices via [stockprices.dev](https://stockprices.dev).
+Wheel Strategy Tracker for Cash Secured Puts (CSPs) and Covered Calls (CCs) with multi-account support and portfolio management. Self-hosted, local-first app with SQLite storage. Only external dependency is optional live prices via Yahoo Finance.
 
-**Current Version:** 0.13.0
+**Current Version:** 0.15.0
 **Docker:** `yomikoye/optionable:latest`
 
 ---
@@ -18,7 +18,7 @@ server/
 ├── index.js                     # createApp() + startServer()
 ├── db/
 │   ├── connection.js            # DB singleton, WAL, pragmas
-│   ├── migrations.js            # Schema versioning + 10 migrations
+│   ├── migrations.js            # Schema versioning + 12 migrations
 │   └── seed.js                  # Demo data + cost basis fixup
 ├── middleware/
 │   └── index.js                 # cors, json parser, request ID, security headers
@@ -95,12 +95,12 @@ src/
 
 All prices stored as INTEGER cents (converted at API boundary).
 
-- **trades** — ticker, type (CSP/CC), strike, quantity, delta, entryPrice, closePrice, dates, status, parentTradeId, notes, accountId
+- **trades** — ticker, type (CSP/CC), strike, quantity, delta, entryPrice, closePrice, dates, status, parentTradeId, notes, commission, accountId
 - **positions** — ticker, shares, costBasis, acquiredDate, acquiredFromTradeId, salePrice, soldViaTradeId, capitalGainLoss, accountId
-- **accounts** — name, createdAt, updatedAt
+- **accounts** — name, commissionPerContract, createdAt, updatedAt
 - **fund_transactions** — accountId, type (deposit/withdrawal/dividend/interest/fee), amount, date, description
 - **stocks** — accountId, ticker, shares, costBasis, acquiredDate, soldDate, salePrice, capitalGainLoss, notes
-- **price_cache** — ticker, price, change, changePercent (cached from stockprices.dev)
+- **price_cache** — ticker, price, change, changePercent (cached from Yahoo Finance)
 - **settings** — key/value store (live_prices_enabled, confirm_expiry, portfolio_mode_enabled)
 - **schema_migrations** — version, applied_at, description (Flyway-style migration tracking)
 
@@ -111,7 +111,7 @@ All prices stored as INTEGER cents (converted at API boundary).
 | `server.js` | Thin entry point (imports `server/index.js`) |
 | `server/index.js` | App creation, startup orchestration |
 | `server/db/connection.js` | Database singleton + WAL config |
-| `server/db/migrations.js` | Schema versioning (10 migrations) |
+| `server/db/migrations.js` | Schema versioning (12 migrations) |
 | `server/routes/trades.js` | Trade CRUD + roll + import endpoints |
 | `server/routes/portfolio.js` | Portfolio stats + monthly breakdown |
 | `src/App.jsx` | React orchestration with tab routing |
@@ -174,6 +174,13 @@ npm run build        # Build for production
    - Use the CHANGELOG.md entry for the version as the release notes body
    - Include a Docker pull command at the bottom of the notes
    - Only the newest release should have `--latest=true`
+10. **Post-release cleanup:**
+    - Delete the feature branch (local + remote): `git branch -d <branch>` / `git push origin --delete <branch>`
+    - Delete any other merged or stale local branches: `git branch --merged main` to find them
+    - Prune stale remote refs: `git remote prune origin`
+    - Reset `develop` to match `main`: `git checkout develop && git reset --hard main && git push origin develop`
+    - Stop and remove the Docker buildx container: `docker stop buildx_buildkit_multiplatform0 && docker rm buildx_buildkit_multiplatform0`
+    - Verify final state: only `main` and `develop` branches, both on same commit
 
 ---
 

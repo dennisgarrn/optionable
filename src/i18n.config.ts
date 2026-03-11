@@ -1,8 +1,8 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import en from './locales/en.json';
-import de from './locales/de.json';
-import { LANGUAGE_LOCALES } from '../utils/constants';
+import en from './i18n/locales/en.json';
+import de from './i18n/locales/de.json';
+import { LANGUAGE_LOCALES } from './utils/constants';
 
 const savedLanguage = typeof window !== 'undefined' ? localStorage.getItem('language') : null;
 const initialLanguage = savedLanguage || LANGUAGE_LOCALES.EN;

@@ -6,6 +6,16 @@ import { validateTrade } from '../utils/validation.js';
 
 const router = Router();
 
+// Calculate commission for a trade based on account rate
+// legs: 1 for Open/Expired/Assigned (only opening leg), 2 for Closed/Rolled (open+close)
+const calculateCommission = (accountId, quantity, status) => {
+    if (!accountId) return 0;
+    const account = db.prepare('SELECT commissionPerContract FROM accounts WHERE id = ?').get(accountId);
+    if (!account || !account.commissionPerContract) return 0;
+    const legs = (status === 'Closed' || status === 'Rolled') ? 2 : 1;
+    return account.commissionPerContract * quantity * legs;
+};
+
 // POST roll trade (atomic: close original + create new) - MUST be before /:id
 router.post('/roll', (req, res) => {
     try {
@@ -33,32 +43,44 @@ router.post('/roll', (req, res) => {
         }
 
         const rollTransaction = db.transaction(() => {
+            // Original trade gets 2-leg commission (opened + closed via roll)
+            const originalQty = original.quantity || 1;
+            const originalCommission = calculateCommission(original.accountId, originalQty, 'Rolled');
+
             // Close original trade as Rolled
             db.prepare(`
                 UPDATE trades
-                SET closePrice = ?, closedDate = ?, status = 'Rolled', updatedAt = CURRENT_TIMESTAMP
+                SET closePrice = ?, closedDate = ?, status = 'Rolled', commission = ?, updatedAt = CURRENT_TIMESTAMP
                 WHERE id = ?
-            `).run(toCents(closePrice), newTrade.openedDate, originalTradeId);
+            `).run(toCents(closePrice), newTrade.openedDate, originalCommission, originalTradeId);
+
+            // New rolled trade: honor user-supplied commission or auto-calculate
+            const newQty = newTrade.quantity || original.quantity;
+            const newStatus = newTrade.status || 'Open';
+            const newCommission = (newTrade.commission !== undefined && newTrade.commission !== null && newTrade.commission !== '')
+                ? toCents(newTrade.commission)
+                : calculateCommission(original.accountId, newQty, newStatus);
 
             // Create new rolled trade (inherit accountId from original)
             const result = db.prepare(`
-                INSERT INTO trades (ticker, type, strike, quantity, delta, entryPrice, closePrice, openedDate, expirationDate, closedDate, status, parentTradeId, notes, accountId)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO trades (ticker, type, strike, quantity, delta, entryPrice, closePrice, openedDate, expirationDate, closedDate, status, parentTradeId, notes, accountId, commission)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `).run(
                 original.ticker,
                 newTrade.type || original.type,
                 toCents(newTrade.strike),
-                newTrade.quantity || original.quantity,
+                newQty,
                 newTrade.delta || null,
                 toCents(newTrade.entryPrice),
                 toCents(newTrade.closePrice) || 0,
                 newTrade.openedDate,
                 newTrade.expirationDate,
                 newTrade.closedDate || null,
-                newTrade.status || 'Open',
+                newStatus,
                 originalTradeId,
                 newTrade.notes || null,
-                original.accountId
+                original.accountId,
+                newCommission
             );
 
             return result.lastInsertRowid;
@@ -83,8 +105,8 @@ router.post('/import', (req, res) => {
         }
 
         const stmt = db.prepare(`
-            INSERT INTO trades (ticker, type, strike, quantity, delta, entryPrice, closePrice, openedDate, expirationDate, closedDate, status, parentTradeId, notes, accountId)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO trades (ticker, type, strike, quantity, delta, entryPrice, closePrice, openedDate, expirationDate, closedDate, status, parentTradeId, notes, accountId, commission)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         const dupCheck = db.prepare(`
@@ -129,21 +151,29 @@ router.post('/import', (req, res) => {
                             remaining.splice(i, 1);
                             continue;
                         }
+                        // Commission: use provided value or auto-calculate
+                        const tradeQty = trade.quantity || 1;
+                        const tradeStatus = trade.status || 'Open';
+                        const tradeCommission = (trade.commission !== undefined && trade.commission !== null && trade.commission !== '')
+                            ? toCents(trade.commission)
+                            : calculateCommission(tradeAccountId, tradeQty, tradeStatus);
+
                         const result = stmt.run(
                             trade.ticker?.toUpperCase(),
                             trade.type,
                             toCents(trade.strike),
-                            trade.quantity || 1,
+                            tradeQty,
                             trade.delta || null,
                             toCents(trade.entryPrice),
                             toCents(trade.closePrice) || 0,
                             trade.openedDate,
                             trade.expirationDate,
                             trade.closedDate || null,
-                            trade.status || 'Open',
+                            tradeStatus,
                             newParentId,
                             trade.notes || null,
-                            tradeAccountId
+                            tradeAccountId,
+                            tradeCommission
                         );
                         const newId = result.lastInsertRowid;
                         if (trade.id) idMap.set(Number(trade.id), newId);
@@ -169,8 +199,9 @@ router.post('/import', (req, res) => {
                 }
             }
 
-            // Create positions for CSP Assigned trades, close positions for CC Assigned trades
+            // Create positions for CSP Assigned trades, close positions for CC Assigned trades (wheel only)
             for (const trade of assignedTrades) {
+                if (trade.type !== 'CSP' && trade.type !== 'CC') continue;
                 const shares = trade.quantity * 100;
                 const assignmentDate = trade.closedDate || new Date().toISOString().split('T')[0];
 
@@ -322,7 +353,8 @@ router.post('/', (req, res) => {
             status,
             parentTradeId,
             notes,
-            accountId
+            accountId,
+            commission
         } = req.body;
 
         // Validate input
@@ -334,8 +366,7 @@ router.post('/', (req, res) => {
         const tickerUpper = ticker.toUpperCase();
         let resolvedParentTradeId = parentTradeId || null;
 
-        // Auto-link CC to assigned CSP: If creating a CC for a ticker with an open position
-        // from a CSP assignment, auto-link the CC to that CSP trade
+        // Auto-link CC to assigned CSP (wheel strategy only)
         if (type === 'CC' && !parentTradeId) {
             const positionQuery = accountId
                 ? `SELECT acquiredFromTradeId FROM positions
@@ -353,26 +384,34 @@ router.post('/', (req, res) => {
             }
         }
 
+        // Commission: use provided value or auto-calculate from account rate
+        const tradeQty = quantity || 1;
+        const tradeStatus = status || 'Open';
+        const commissionCents = (commission !== undefined && commission !== null && commission !== '')
+            ? toCents(commission)
+            : calculateCommission(accountId, tradeQty, tradeStatus);
+
         const stmt = db.prepare(`
-      INSERT INTO trades (ticker, type, strike, quantity, delta, entryPrice, closePrice, openedDate, expirationDate, closedDate, status, parentTradeId, notes, accountId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO trades (ticker, type, strike, quantity, delta, entryPrice, closePrice, openedDate, expirationDate, closedDate, status, parentTradeId, notes, accountId, commission)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
         const result = stmt.run(
             tickerUpper,
             type,
             toCents(strike),
-            quantity || 1,
+            tradeQty,
             delta || null,
             toCents(entryPrice),
             toCents(closePrice) || 0,
             openedDate,
             expirationDate,
             closedDate || null,
-            status || 'Open',
+            tradeStatus,
             resolvedParentTradeId,
             notes || null,
-            accountId || null
+            accountId || null,
+            commissionCents
         );
 
         const newTrade = db.prepare('SELECT * FROM trades WHERE id = ?').get(result.lastInsertRowid);
@@ -413,10 +452,18 @@ router.put('/:id', (req, res) => {
         const parentTradeId = req.body.parentTradeId ?? currentTrade.parentTradeId;
         const notes = req.body.notes ?? currentTrade.notes;
 
+        // Commission: if explicitly provided use it, else always recalculate from account rate
+        let commissionCents;
+        if (req.body.commission !== undefined && req.body.commission !== null && req.body.commission !== '') {
+            commissionCents = toCents(req.body.commission);
+        } else {
+            commissionCents = calculateCommission(currentTrade.accountId, quantity || 1, status);
+        }
+
         const stmt = db.prepare(`
       UPDATE trades
       SET ticker = ?, type = ?, strike = ?, quantity = ?, delta = ?, entryPrice = ?, closePrice = ?,
-          openedDate = ?, expirationDate = ?, closedDate = ?, status = ?, parentTradeId = ?, notes = ?, updatedAt = CURRENT_TIMESTAMP
+          openedDate = ?, expirationDate = ?, closedDate = ?, status = ?, parentTradeId = ?, notes = ?, commission = ?, updatedAt = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
 
@@ -434,6 +481,7 @@ router.put('/:id', (req, res) => {
             status || 'Open',
             parentTradeId || null,
             notes || null,
+            commissionCents,
             req.params.id
         );
 
@@ -444,8 +492,8 @@ router.put('/:id', (req, res) => {
         const updatedTrade = db.prepare('SELECT * FROM trades WHERE id = ?').get(req.params.id);
         const updatedTradeApi = tradeToApi(updatedTrade);
 
-        // Handle position creation/closing on assignment
-        if (status === 'Assigned' && currentTrade.status !== 'Assigned') {
+        // Handle position creation/closing on assignment (wheel strategy only)
+        if (status === 'Assigned' && currentTrade.status !== 'Assigned' && (type === 'CSP' || type === 'CC')) {
             const tickerUpper = ticker.toUpperCase();
             const shares = (quantity || 1) * 100;
             const assignmentDate = closedDate || new Date().toISOString().split('T')[0];

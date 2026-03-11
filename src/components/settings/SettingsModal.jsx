@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, X, ShieldCheck, Briefcase, Sun, Moon, Plus, Pencil, Trash2, Check, HelpCircle, List, Download, Globe } from 'lucide-react';
+import { Settings, X, Wifi, WifiOff, ShieldCheck, Briefcase, Sun, Moon, Plus, Pencil, Trash2, Check, HelpCircle, List, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { LANGUAGE_LOCALES } from '../../utils/constants';
@@ -17,6 +17,9 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
     const [newAccountName, setNewAccountName] = useState('');
     const [editingAccountId, setEditingAccountId] = useState(null);
     const [editingAccountName, setEditingAccountName] = useState('');
+    
+    const [newAccountCommission, setNewAccountCommission] = useState('');
+    const [editingAccountCommission, setEditingAccountCommission] = useState('');
     
     const { language, setLanguage } = useLanguage();
     
@@ -65,8 +68,10 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
     const handleAddAccount = async () => {
         if (!newAccountName.trim()) return;
         try {
-            await onCreateAccount(newAccountName.trim());
+            const commission = newAccountCommission ? Number(newAccountCommission) : 0;
+            await onCreateAccount(newAccountName.trim(), commission);
             setNewAccountName('');
+            setNewAccountCommission('');
             showToast?.(t('toast.accountCreated'), 'success');
         } catch (err) {
             showToast?.(t('toast.accountCreationFailed'), 'error');
@@ -76,9 +81,11 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
     const handleRenameAccount = async (id) => {
         if (!editingAccountName.trim()) return;
         try {
-            await onRenameAccount(id, editingAccountName.trim());
+            const commission = editingAccountCommission !== '' ? Number(editingAccountCommission) : undefined;
+            await onRenameAccount(id, editingAccountName.trim(), commission);
             setEditingAccountId(null);
             setEditingAccountName('');
+            setEditingAccountCommission('');
             showToast?.(t('toast.accountRenamed'), 'success');
         } catch (err) {
             showToast?.(t('toast.failedToRenameAccount'), 'error');
@@ -110,6 +117,7 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
         }
     };
 
+    const livePricesEnabled = settings.live_prices_enabled === 'true';
     const confirmExpireEnabled = settings.confirm_expire_enabled !== 'false'; // Default true
     const portfolioModeEnabled = settings.portfolio_mode_enabled === 'true';
     const paginationEnabled = settings.pagination_enabled !== 'false';
@@ -192,6 +200,38 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                             <span
                                 className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
                                     confirmExpireEnabled ? 'translate-x-5' : 'translate-x-0'
+                                }`}
+                            />
+                        </button>
+                    </div>
+
+                    {/* Live Stock Prices Toggle */}
+                    <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                            {livePricesEnabled ? (
+                                <Wifi className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                            ) : (
+                                <WifiOff className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                            )}
+                            <div>
+                                <p className="font-medium text-slate-900 dark:text-white">Live Stock Prices</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Fetch prices from Yahoo Finance
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => updateSetting('live_prices_enabled', livePricesEnabled ? 'false' : 'true')}
+                            disabled={saving}
+                            className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${
+                                livePricesEnabled
+                                    ? 'bg-indigo-500'
+                                    : 'bg-slate-300 dark:bg-slate-600'
+                            }`}
+                        >
+                            <span
+                                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                    livePricesEnabled ? 'translate-x-5' : 'translate-x-0'
                                 }`}
                             />
                         </button>
@@ -371,33 +411,56 @@ export const SettingsModal = ({ onClose, showToast, accounts, onCreateAccount, o
                             {accounts && accounts.map(account => (
                                 <div key={account.id} className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
                                     {editingAccountId === account.id ? (
-                                        <>
-                                            <input
-                                                type="text"
-                                                value={editingAccountName}
-                                                onChange={(e) => setEditingAccountName(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleRenameAccount(account.id)}
-                                                className="flex-1 px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                autoFocus
-                                            />
-                                            <button
-                                                onClick={() => handleRenameAccount(account.id)}
-                                                className="p-1 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded"
-                                            >
-                                                <Check className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => { setEditingAccountId(null); setEditingAccountName(''); }}
-                                                className="p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        </>
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={editingAccountName}
+                                                    onChange={(e) => setEditingAccountName(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleRenameAccount(account.id)}
+                                                    className="flex-1 px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    placeholder="Account name"
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    onClick={() => handleRenameAccount(account.id)}
+                                                    className="p-1 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded"
+                                                >
+                                                    <Check className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => { setEditingAccountId(null); setEditingAccountName(''); setEditingAccountCommission(''); }}
+                                                    className="p-1 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">$/contract</span>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={editingAccountCommission}
+                                                    onChange={(e) => setEditingAccountCommission(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleRenameAccount(account.id)}
+                                                    className="w-24 px-2 py-1 text-sm rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                        </div>
                                     ) : (
                                         <>
-                                            <span className="flex-1 text-sm font-medium text-slate-700 dark:text-slate-300">{account.name}</span>
+                                            <div className="flex-1">
+                                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{account.name}</span>
+                                                {account.commissionPerContract > 0 && (
+                                                    <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+                                                        ${account.commissionPerContract}/contract
+                                                    </span>
+                                                )}
+                                            </div>
                                             <button
-                                                onClick={() => { setEditingAccountId(account.id); setEditingAccountName(account.name); }}
+                                                onClick={() => { setEditingAccountId(account.id); setEditingAccountName(account.name); setEditingAccountCommission(account.commissionPerContract || ''); }}
                                                 className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors"
                                                 title={t('common.rename')}
                                             >

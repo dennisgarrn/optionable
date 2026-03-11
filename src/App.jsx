@@ -284,6 +284,7 @@ export default function App() {
                         selectedAccountId={selectedAccountId}
                         accounts={accounts}
                         buyStockTrigger={buyStockTrigger}
+                        itemsPerPage={tradesPerPage}
                     />
                 )}
 

@@ -1,6 +1,6 @@
 {
     "name": "optionable",
-    "version": "0.13.0",
+    "version": "0.15.0",
     "description": "Wheel Strategy Tracker for CSPs and Covered Calls",
     "type": "module",
     "scripts": {
@@ -17,7 +17,8 @@
         "express": "^4.21.1",
         "i18next": "^25.8.13",
         "papaparse": "^5.5.3",
-        "react-i18next": "^16.5.4"
+        "react-i18next": "^16.5.4",
+        "yahoo-finance2": "^3.13.2"
     },
     "devDependencies": {
         "@vitejs/plugin-react": "^4.3.3",

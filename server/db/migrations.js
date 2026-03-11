@@ -361,6 +361,86 @@ const migrations = [
             db.prepare(`INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)`).run('pagination_enabled', 'true');
             db.prepare(`INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)`).run('trades_per_page', '5');
         }
+    },
+    {
+        version: 12,
+        description: 'Commission tracking',
+        up: () => {
+            db.exec(`
+                ALTER TABLE accounts ADD COLUMN commissionPerContract INTEGER NOT NULL DEFAULT 0;
+                ALTER TABLE trades ADD COLUMN commission INTEGER NOT NULL DEFAULT 0;
+            `);
+        }
+    },
+    {
+        version: 13,
+        description: 'Default account commission rate $0.66 + backfill',
+        up: () => {
+            const rate = 66; // $0.66 in cents
+            // Set default account (first account) to $0.66/contract
+            const defaultAccount = db.prepare('SELECT id FROM accounts ORDER BY id LIMIT 1').get();
+            if (!defaultAccount) return;
+
+            db.prepare('UPDATE accounts SET commissionPerContract = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?')
+                .run(rate, defaultAccount.id);
+
+            // Recalculate commission for all trades in the default account
+            const trades = db.prepare('SELECT id, quantity, status FROM trades WHERE accountId = ?').all(defaultAccount.id);
+            const updateStmt = db.prepare('UPDATE trades SET commission = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?');
+            for (const trade of trades) {
+                const legs = (trade.status === 'Closed' || trade.status === 'Rolled') ? 2 : 1;
+                updateStmt.run(rate * (trade.quantity || 1) * legs, trade.id);
+            }
+            console.log(`💰 Set default account to $0.66/contract, recalculated ${trades.length} trades`);
+        }
+    },
+    {
+        version: 14,
+        description: 'Add CALL and PUT trade types',
+        up: () => {
+            const alreadyDone = db.prepare('SELECT value FROM settings WHERE key = ?').get('call_put_migration_v1');
+            if (alreadyDone) return;
+
+            db.pragma('foreign_keys = OFF');
+            db.exec(`
+                CREATE TABLE trades_v14 (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticker TEXT NOT NULL CHECK(length(ticker) > 0),
+                    type TEXT NOT NULL CHECK(type IN ('CSP', 'CC', 'CALL', 'PUT')),
+                    strike INTEGER NOT NULL CHECK(strike > 0),
+                    quantity INTEGER NOT NULL DEFAULT 1 CHECK(quantity >= 1),
+                    delta REAL CHECK(delta IS NULL OR (delta >= 0 AND delta <= 1)),
+                    entryPrice INTEGER NOT NULL CHECK(entryPrice >= 0),
+                    closePrice INTEGER DEFAULT 0 CHECK(closePrice >= 0),
+                    openedDate TEXT NOT NULL,
+                    expirationDate TEXT NOT NULL,
+                    closedDate TEXT,
+                    status TEXT NOT NULL DEFAULT 'Open' CHECK(status IN ('Open', 'Expired', 'Assigned', 'Closed', 'Rolled')),
+                    parentTradeId INTEGER REFERENCES trades_v14(id) ON DELETE SET NULL,
+                    notes TEXT,
+                    createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                    accountId INTEGER REFERENCES accounts(id) ON DELETE RESTRICT,
+                    commission INTEGER NOT NULL DEFAULT 0,
+                    CHECK(expirationDate >= openedDate)
+                );
+                INSERT INTO trades_v14 SELECT * FROM trades;
+                DROP TABLE trades;
+                ALTER TABLE trades_v14 RENAME TO trades;
+            `);
+            db.exec(`
+                CREATE INDEX idx_trades_status ON trades(status);
+                CREATE INDEX idx_trades_ticker ON trades(ticker);
+                CREATE INDEX idx_trades_openedDate ON trades(openedDate);
+                CREATE INDEX idx_trades_expirationDate ON trades(expirationDate);
+                CREATE INDEX idx_trades_closedDate ON trades(closedDate);
+                CREATE INDEX idx_trades_parentTradeId ON trades(parentTradeId);
+                CREATE INDEX idx_trades_status_openedDate ON trades(status, openedDate);
+                CREATE INDEX idx_trades_accountId ON trades(accountId);
+            `);
+            db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('call_put_migration_v1', 'true');
+            db.pragma('foreign_keys = ON');
+        }
     }
 ];
 

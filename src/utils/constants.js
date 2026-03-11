@@ -2,7 +2,7 @@
 export const API_URL = '/api';
 
 // App Version
-export const APP_VERSION = '0.13.0';
+export const APP_VERSION = '0.15.0';
 
 // Pagination (default fallback — configurable via Settings)
 export const TRADES_PER_PAGE = 5;
@@ -31,8 +31,16 @@ export const STATUS = {
 // Trade types
 export const TRADE_TYPE = {
     CSP: 'CSP',
-    CC: 'CC'
+    CC: 'CC',
+    CALL: 'CALL',
+    PUT: 'PUT'
 };
+
+// Whether a trade type is buy-side (you pay premium)
+export const isBuySide = (type) => type === 'CALL' || type === 'PUT';
+
+// Whether a trade type is sell-side / wheel strategy (you collect premium)
+export const isSellSide = (type) => type === 'CSP' || type === 'CC';
 
 // Status filter options
 export const STATUS_FILTERS = {
